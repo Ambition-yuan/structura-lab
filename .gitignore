@@ -7,3 +7,7 @@ qa/*.png
 qa/*.json
 *.tar.gz
 *.tgz
+.tools/
+.env
+.env.*
+!.env.example

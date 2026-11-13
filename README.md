@@ -21,6 +21,12 @@ npm run build
 
 唯一应用依赖是 **Three.js 0.180.0**，包括其 OrbitControls、RoundedBoxGeometry 等附加模块。模型由基础几何体组合，纹理由 Canvas 程序生成；没有外部模型、图片、字体、服务密钥或后端。首次安装依赖需要网络。
 
+## GitHub Pages 发布
+
+仓库包含 `.github/workflows/pages.yml`：推送到 `main` 或在 Actions 手动运行工作流后，会使用 Node.js 22 安装依赖、构建 `dist/` 并部署到 GitHub Pages。
+
+首次部署前，在仓库 **Settings → Pages → Build and deployment → Source** 选择 **GitHub Actions**。网页和模块均使用相对路径，支持 GitHub Pages 的项目子目录地址。
+
 ## 模型与资料范围
 
 10 组部件：机身框架、前面板、镜头保护盖、镜头模组、前屏、后屏、主板、电池、按键、磁吸快拆接口。
