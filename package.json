@@ -1,0 +1,14 @@
+{
+  "name": "structura-lab",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Procedural product structure explorer — DJI Osmo Action 4",
+  "scripts": {
+    "start": "node scripts/serve.cjs",
+    "dev": "node scripts/serve.cjs",
+    "build": "node scripts/build.cjs"
+  },
+  "dependencies": {
+    "three": "0.180.0"
+  }
+}

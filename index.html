@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f6f6f2" />
+    <meta name="description" content="在三维空间中探索 DJI Osmo Action 4。旋转、拆解与观察十组部件，了解产品结构。内部结构为程序化示意。" />
+    <title>Osmo Action 4 — STRUCTURA 解构实验室</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%231a1d1a'/%3E%3Cpath d='m20 8 12 7-12 7-12-7zm-12 13 12 7 12-7M8 27l12 7 12-7' fill='none' stroke='%23d0f66b' stroke-width='2.4'/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="./src/styles.css" />
+    <script type="importmap">
+      { "imports": { "three": "./vendor/three/build/three.module.js", "three/addons/": "./vendor/three/examples/jsm/" } }
+    </script>
+  </head>
+  <body>
+    <svg class="icon-sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <symbol id="icon-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 12 9 5 9-5M3 16l9 5 9-5"/></symbol>
+      <symbol id="icon-cube" viewBox="0 0 24 24"><path d="m12 3 9 5v8l-9 5-9-5V8l9-5Zm0 10 9-5M3 8l9 5v8M7.5 5.5l9 5"/></symbol>
+      <symbol id="icon-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></symbol>
+      <symbol id="icon-explode" viewBox="0 0 24 24"><path d="m12 8 6 3-6 3-6-3 6-3Zm-6 8 6 3 6-3M12 3v2m0 16v-2M3 9l-1 1m19-1 1 1"/></symbol>
+      <symbol id="icon-reset" viewBox="0 0 24 24"><path d="M3 10a9 9 0 1 1 2.4 8M3 4v6h6"/></symbol>
+      <symbol id="icon-rotate" viewBox="0 0 24 24"><path d="M7 7a7 7 0 0 1 11.6 2M17 17A7 7 0 0 1 5.4 15M19 4v5h-5M5 20v-5h5"/></symbol>
+      <symbol id="icon-label" viewBox="0 0 24 24"><path d="M3 5h10l8 7-8 7H3V5Z"/><circle cx="7" cy="12" r="1.2"/></symbol>
+      <symbol id="icon-fit" viewBox="0 0 24 24"><path d="M9 3H3v6m12-6h6v6M3 15v6h6m12-6v6h-6M8 8h8v8H8z"/></symbol>
+      <symbol id="icon-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v.1"/></symbol>
+      <symbol id="icon-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 4.2 1.8c-1.2.7-1.7 1.1-1.7 2.7m0 3v.1"/></symbol>
+      <symbol id="icon-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+      <symbol id="icon-mouse" viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="6"/><path d="M12 3v6"/></symbol>
+      <symbol id="icon-hand" viewBox="0 0 24 24"><path d="M8 12V5a2 2 0 0 1 4 0v7-4a2 2 0 0 1 4 0v4-2a2 2 0 0 1 4 0v6a6 6 0 0 1-6 6h-1a6 6 0 0 1-5-3l-4-6a2 2 0 0 1 3-2l1 1Z"/></symbol>
+      <symbol id="icon-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+      <symbol id="icon-external" viewBox="0 0 24 24"><path d="M14 3h7v7m0-7L10 14M10 3H3v18h18v-7"/></symbol>
+    </svg>
+
+    <header class="app-header">
+      <a class="brand" href="./" aria-label="STRUCTURA 解构实验室首页">
+        <span class="brand-mark"><svg><use href="#icon-layers"/></svg></span>
+        <span class="brand-word">STRUCTURA<span>解构实验室</span></span>
+      </a>
+      <span class="header-divider"></span>
+      <span class="header-caption">理解设计，从拆解开始。</span>
+      <div class="product-picker">
+        <span class="picker-label">当前产品</span>
+        <label class="select-wrap"><span class="sr-only">切换产品</span><select id="product-select"><option value="action-4">DJI Osmo Action 4</option></select><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m5 6 3 3 3-3"/></svg></label>
+      </div>
+      <span class="edition">VOL. <strong>001</strong></span>
+    </header>
+
+    <div class="app-body">
+      <nav class="nav-rail" aria-label="工具导航">
+        <button id="nav-explore" class="nav-button active" aria-label="结构探索" title="结构探索" aria-current="page"><svg><use href="#icon-cube"/></svg></button>
+        <span class="rail-line"></span>
+        <button id="info-btn" class="nav-button" aria-label="参考资料与示意说明" title="参考资料与示意说明"><svg><use href="#icon-info"/></svg></button>
+        <button id="help-btn" class="nav-button rail-bottom" aria-label="操作指南" title="操作指南"><svg><use href="#icon-help"/></svg></button>
+        <span class="rail-version">V.01</span>
+      </nav>
+
+      <main class="workbench">
+        <section class="main-column" aria-labelledby="product-title">
+          <div class="product-heading">
+            <div><p class="eyebrow"><span></span> PRODUCT EXPLORER <span class="eyebrow-slash">/</span> 运动相机</p><h1 id="product-title">Osmo Action <span>4</span></h1><p class="product-subtitle">小巧机身，逐层探索。<span>看见每一个部件的巧思。</span></p></div>
+            <div class="product-tag"><span>DJI</span><span>2023 · ACTION CAMERA</span></div>
+          </div>
+
+          <div class="scene-card">
+            <div id="viewport" class="viewport" aria-label="Action 4 交互式三维模型，拖动旋转，滚轮缩放">
+              <div class="stage-top"><div class="stage-caption"><span>01 — STRUCTURE STUDY</span><strong>探索，始于好奇。</strong></div><span class="live-badge"><i></i> 实时 3D</span></div>
+              <div class="stage-wordmark" aria-hidden="true">ACTION 4</div>
+              <div class="stage-cross cross-one" aria-hidden="true">+</div><div class="stage-cross cross-two" aria-hidden="true">+</div>
+              <div id="labels-layer" class="labels-layer"></div>
+              <div id="loading" class="loading-state"><span class="loading-spinner"></span><span>正在构建三维场景</span><small>从几何开始，还原设计。</small></div>
+              <div id="fallback" class="fallback-state" hidden><svg><use href="#icon-cube"/></svg><h2>暂时无法显示三维场景</h2><p>请使用支持 WebGL 的现代浏览器，并开启硬件加速后重试。</p><button type="button" onclick="location.reload()">重新加载</button></div>
+              <div class="stage-bottom"><span id="view-status" class="view-status">完整组装</span><div class="view-segment" aria-label="标准视角"><button id="front-view-btn" type="button" title="查看正面">正面</button><button id="rear-view-btn" type="button" title="查看背面">背面</button></div></div>
+              <div class="stage-tools"><button id="fit-btn" class="icon-button" aria-label="适应视野" title="适应视野"><svg><use href="#icon-fit"/></svg></button><button id="auto-rotate-btn" class="icon-button" aria-label="自动旋转" aria-pressed="false" title="自动旋转"><svg><use href="#icon-rotate"/></svg></button><button id="labels-btn" class="icon-button" aria-label="显示部件标签" aria-pressed="false" title="显示部件标签"><svg><use href="#icon-label"/></svg></button></div>
+            </div>
+
+            <div class="control-deck">
+              <div class="control-actions"><button id="explode-btn" class="primary-button" aria-pressed="false"><svg><use href="#icon-explode"/></svg><span>展开结构</span><kbd>SPACE</kbd></button><button id="reset-btn" class="reset-button" title="复原模型与视角（R）"><svg><use href="#icon-reset"/></svg><span>复原</span></button></div>
+              <div class="explode-control"><div class="range-label"><label for="explode-range">拆解程度</label><output id="explode-value" for="explode-range">0<span>%</span></output></div><div class="range-track"><span>组装</span><input id="explode-range" type="range" min="0" max="100" value="0" step="1" aria-label="拆解程度" /><span>展开</span></div></div>
+            </div>
+          </div>
+
+          <div class="interaction-guide"><span><svg><use href="#icon-hand"/></svg>拖动旋转</span><span><svg><use href="#icon-mouse"/></svg>滚轮缩放 / 双指缩放</span><span><svg><use href="#icon-plus"/></svg>点击部件探索</span><span class="guide-count">10 PARTS · 1 PERSPECTIVE</span></div>
+        </section>
+
+        <aside class="inspector" aria-label="部件与详情">
+          <div class="inspector-heading"><div><span class="eyebrow">INSIDE THE DESIGN</span><h2>部件目录 <span>10</span></h2></div><svg><use href="#icon-layers"/></svg></div>
+          <div class="parts-caption"><span>选择一个部件，了解它的作用</span><span>↓</span></div>
+          <div id="parts-list" class="parts-list" aria-label="部件列表"></div>
+          <section id="detail-panel" class="detail-panel" aria-live="polite" aria-atomic="true">
+            <div class="detail-topline"><span id="detail-index">OVERVIEW</span><span id="detail-kind" class="detail-badge">产品概览</span></div>
+            <h3 id="detail-title">精巧之内，大有可观。</h3>
+            <p id="detail-en" class="detail-en">DJI OSMO ACTION 4</p>
+            <p id="detail-description" class="detail-description">旋转机身，或展开结构。选择模型上的部件，了解外观之下的设计。</p>
+            <dl id="detail-specs" class="detail-specs"><div><dt>传感器</dt><dd>1/1.3 英寸 CMOS</dd></div><div><dt>机身重量</dt><dd>145 g</dd></div><div><dt>外形尺寸</dt><dd>70.5 × 44.2 × 32.8 mm</dd></div></dl>
+          </section>
+          <button id="sources-btn" class="sources-note"><svg><use href="#icon-info"/></svg><span><strong>关于这个模型</strong><span>内部结构与拆解路径为示意</span></span><svg class="source-arrow"><use href="#icon-arrow"/></svg></button>
+        </aside>
+      </main>
+    </div>
+
+    <footer class="app-footer"><span>DESIGNED TO BE DISCOVERED.</span><span><i></i> 程序化建模 <b>·</b> 内部结构为示意</span><span>STRUCTURA LAB <b>©</b> 2026</span></footer>
+
+    <dialog id="sources-dialog" class="info-dialog" aria-labelledby="sources-title"><div class="dialog-header"><span class="eyebrow">MODEL NOTES</span><button id="close-sources-btn" class="dialog-close" aria-label="关闭资料说明"><svg><use href="#icon-close"/></svg></button></div><h2 id="sources-title">外观有据，结构为示意。</h2><p>本模型使用 Three.js 基础几何体和程序化纹理构建，未使用外部 3D 模型。外形比例、公开参数与标志性外观参考 DJI 官方资料。</p><div class="dialog-callout"><strong>示意范围</strong><p>主板布局、内部支架、连接方式、材质细节及部件拆解路径均为简化示意，不代表真实工程结构，也不能作为维修拆机指导。模型中的显示画面为程序化绘制。</p></div><h3>参考资料</h3><a href="https://www.dji.com/osmo-action-4/specs" target="_blank" rel="noreferrer">DJI Osmo Action 4 · 官方规格<svg><use href="#icon-external"/></svg></a><a href="https://www.dji.com/osmo-action-4" target="_blank" rel="noreferrer">DJI Osmo Action 4 · 产品页面<svg><use href="#icon-external"/></svg></a><a href="https://dl.djicdn.com/downloads/DJI_Osmo_Action_4/UM/20230906/DJI_Osmo_Action_4_User_Manual_v1.2_en.pdf" target="_blank" rel="noreferrer">DJI Osmo Action 4 · 用户手册<svg><use href="#icon-external"/></svg></a><p class="dialog-footnote">非 DJI 官方展示。产品名称与商标归其各自所有者。</p></dialog>
+    <dialog id="help-dialog" class="info-dialog" aria-labelledby="help-title"><div class="dialog-header"><span class="eyebrow">QUICK GUIDE</span><button id="close-help-btn" class="dialog-close" aria-label="关闭操作指南"><svg><use href="#icon-close"/></svg></button></div><h2 id="help-title">换个角度，发现细节。</h2><div class="help-row"><span>旋转模型</span><strong>鼠标拖动 / 单指滑动</strong></div><div class="help-row"><span>缩放模型</span><strong>鼠标滚轮 / 双指缩放</strong></div><div class="help-row"><span>查看部件</span><strong>点击模型或部件目录</strong></div><div class="help-row"><span>展开 / 组装</span><kbd>SPACE</kbd></div><div class="help-row"><span>复原模型与视角</span><kbd>R</kbd></div><div class="help-row"><span>取消选择</span><kbd>ESC</kbd></div><p class="dialog-footnote">拆解滑杆可停留在任意位置，方便观察层次关系。</p></dialog>
+    <script type="module">
+      import('./src/main.js').catch(error => {
+        console.error(error);
+        document.getElementById('loading').hidden = true;
+        const fallback = document.getElementById('fallback');
+        fallback.hidden = false;
+        fallback.querySelector('p').textContent = '页面资源加载失败。请先运行 npm install，再用 npm start 启动，并通过本地网址访问。';
+      });
+    </script>
+  </body>
+</html>
