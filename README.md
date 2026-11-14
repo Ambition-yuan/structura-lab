@@ -19,7 +19,7 @@ npm run build
 
 构建结果位于 `dist/`，可以交给任意静态 HTTP 服务托管。构建时将 Three.js 复制到 `dist/vendor/three/`，网页从同源加载依赖，不依赖运行时 CDN。
 
-唯一应用依赖是 **Three.js 0.180.0**，包括其 OrbitControls、RoundedBoxGeometry 等附加模块。模型由基础几何体组合，纹理由 Canvas 程序生成；没有外部模型、图片、字体、服务密钥或后端。首次安装依赖需要网络。
+唯一应用依赖是 **Three.js 0.180.0**，包括 OrbitControls、RoundedBoxGeometry、GLTFLoader 等附加模块。Action 4 由基础几何体与 Canvas 纹理生成；SU7 使用随站点分发的 GLB 模型与内嵌贴图。运行时没有外部 CDN、字体、服务密钥或后端；首次安装依赖需要网络。
 
 ## GitHub Pages 发布
 
@@ -43,13 +43,15 @@ npm run build
 
 ## 小米 SU7
 
-小米 SU7 模型位于 `src/products/su7.js`，以 **2024 款标准版**为参考，包含车身、前舱盖、玻璃座舱、左右车门、前后轮组、座舱、底盘、电池包、后电驱和灯组，共 12 组部件。海湾蓝外观由程序化曲面与基础几何生成；内部结构、分件与展开路径均为简化示意，不是实车维修模型。
+小米 SU7 加载器位于 `src/products/su7.js`，外观资产为 `src/assets/su7-detail.glb`（12,094,724 字节）。该文件来自用户提供的 `outputs/model-candidates/su7-detail.glb`，逐字节保持一致，SHA-256 为 `086634cf44101edc3e605f4288ac1eaee1d4fdbd0878dc40f79c10f9f54a73ee`。保留原有 41 个网格、材质和 8 张内嵌图片，统一朝向与展示比例，整理为车身、饰件、玻璃、四扇车门、座舱、轮组、灯组、标识和传感器，共 12 组。
 
-SU7 参数来源为[小米 2024 首发官方配置表](https://s1.xiaomiev.com/activity-outer-assets/0328/env/SU7%E5%8F%82%E6%95%B0%E9%85%8D%E7%BD%AE%E8%A1%A8328.pdf)：长宽高 4997 × 1963 × 1455 mm、轴距 3000 mm、后置单电机后轮驱动。页面明确区分首发标准版与 Pro / Max / Ultra / 后续改款。
+模型《SU7》由 [s1657270997](https://sketchfab.com/s1657270997) 制作，[原作页面](https://sketchfab.com/3d-models/su7-7296a91633d74c6eb113010e2ed75eda)及 [CC BY 4.0 许可](https://creativecommons.org/licenses/by/4.0/)记录于文件元数据，署名也保存在 `src/assets/su7-attribution.txt` 和页面的模型说明中。本应用添加分组、交互高亮和展开动画。源模型未标注年款与配置，因此不将其外观与标准版、Pro 或 Max 的具体参数绑定；官方首发配置表作为独立参考链接保留。
+
+展开依据源模型已有网格，不是工程拆装。车壳及轮组原本合并，保留组合展示；不再添加程序化电池或电驱等未经验证的内部部件。模型异步加载期间保留当前产品，支持取消切换；失败时给出提示并允许重新选择重试。模型资源、纹理及 ImageBitmap 在切换后释放。
 
 ## 接入下一款产品
 
-产品入口位于 `src/products/registry.js`。新增产品模块并参照现有条目提供 `name`、`create`、标题/类别/品牌/期号、概览、默认视角、模型说明和 `sources: [{ label, url }]`。选择器、界面内容和资料弹窗由注册表自动生成。工厂函数返回：
+产品入口位于 `src/products/registry.js`。新增产品模块并参照现有条目提供 `name`、`create`、标题/类别/品牌/期号、概览、默认视角、模型说明和 `sources: [{ label, url }]`。选择器、界面内容和资料弹窗由注册表自动生成。工厂函数可以同步或异步返回：
 
 ```js
 {
@@ -60,7 +62,7 @@ SU7 参数来源为[小米 2024 首发官方配置表](https://s1.xiaomiev.com/a
     extract,   // THREE.Vector3：第一段抽出位置，可选
     exploded,  // THREE.Vector3：完全展开位置
     description, category,
-    kind,      // 'exterior' 或 'schematic'
+    kind,      // 'exterior'、'model' 或 'schematic'
     specs,     // [标签, 值] 的数组
   }],
   dispose, // 可选的资源释放函数
@@ -73,7 +75,7 @@ SU7 参数来源为[小米 2024 首发官方配置表](https://s1.xiaomiev.com/a
 
 ## 验收记录
 
-2026-11-14 新增 `qa/product-switch.cjs`，在桌面 1440×1000 和手机模拟 390×844 检查两产品切换、SU7 的 12 组部件拾取与详情、正反视角、展开/复原的逐帧边界、四轮切换后的图形资源数量，以及 `dist/` 中的 SU7 加载。Action 4 的原有 `qa/acceptance.cjs` 回归通过。
+`qa/product-switch.cjs` 在桌面 1440×1000 和手机模拟 390×844 检查两产品切换、SU7 的 12 组部件拾取与详情、正反视角、展开/复原的逐帧边界、四轮切换后的图形资源数量，以及 `dist/` 中的 SU7 加载。`qa/model-loading.cjs` 检查 GLB 延迟返回、加载失败与恢复。Action 4 使用原有 `qa/acceptance.cjs` 回归检查。
 
 2026-11-13 已在本机 Chrome 通过 `qa/acceptance.cjs` 和 `qa/edge-cases.cjs` 实际验收（桌面 1440×1000、手机模拟 390×844）：
 

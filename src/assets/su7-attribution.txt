@@ -1,0 +1,14 @@
+Title: SU7
+Author: s1657270997
+Author URL: https://sketchfab.com/s1657270997
+Source: https://sketchfab.com/3d-models/su7-7296a91633d74c6eb113010e2ed75eda
+License: Creative Commons Attribution 4.0 International (CC BY 4.0)
+License URL: https://creativecommons.org/licenses/by/4.0/
+
+Attribution above is embedded in the supplied GLB's asset.extras metadata.
+The supplied su7-detail.glb is distributed unchanged with this application.
+Runtime adaptations: orientation and display scale normalization, semantic
+grouping of existing meshes, selection highlights, and illustrative explosion
+paths. Source geometry, materials and embedded textures are preserved.
+The source does not identify an exact model year or trim. This is an artist's
+exterior/cabin model, not a verified engineering or service model.

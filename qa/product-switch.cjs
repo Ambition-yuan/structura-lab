@@ -24,18 +24,20 @@ const assembled = parts => parts.every(part => part.position.every((value, index
       select.value = ${JSON.stringify(id)};
       select.dispatchEvent(new Event('change', { bubbles: true }));
     })()`);
+    await waitFor(`window.__structura.state().productId === ${JSON.stringify(id)} && !window.__structura.state().loading`);
     await frames();
   };
   const waitFor = async expression => {
     const start = Date.now();
     while (!(await b.evaluate(expression))) {
-      if (Date.now() - start > 12000) throw new Error('Timed out: ' + expression);
+      if (Date.now() - start > 45000) throw new Error('Timed out: ' + expression);
       await b.wait(120);
     }
   };
   const assertClean = async (id, count) => {
     const current = await state();
-    assert(current.productId === id && current.parts === count, id + ' loads expected product and part count');
+    assert(current.productId === id && current.parts === count && !current.loading && !current.loadingProductId && !current.loadError,
+      id + ' finishes loading expected product and part count');
     assert(current.progress === 0 && current.desiredProgress === 0 && current.selected === null && !current.autoRotate,
       id + ' resets animation, selection and auto rotation');
     assert(current.guides === count && current.labels === count, id + ' owns exactly one guide and label per part');
@@ -69,10 +71,16 @@ const assembled = parts => parts.every(part => part.position.every((value, index
     })()`);
     const su7 = id === 'xiaomi-su7';
     const needle = su7 ? /SU7/i : /Action\s*4/i;
-    assert(['title', 'description', 'heading', 'stage', 'detail', 'canvas'].every(key => needle.test(metadata[key])) && metadata.model.includes(su7 ? '2024' : '2023'),
+    assert(['title', 'description', 'heading', 'stage', 'detail', 'canvas'].every(key => needle.test(metadata[key])) &&
+      (su7 ? metadata.model === 'SU7 · EXTERIOR STUDY' : metadata.model.includes('2023')),
       id + ' updates title, overview, stage and accessible model name');
-    assert(metadata.links.length > 0 && metadata.links.every(link => su7 ? link.includes('xiaomiev.com') : link.includes('dji.com') || link.includes('djicdn.com')),
-      id + ' uses only its own official source links');
+    const sourceHosts = metadata.links.map(link => new URL(link).hostname);
+    const allowedHosts = su7 ? ['xiaomiev.com', 'sketchfab.com', 'creativecommons.org'] : ['dji.com', 'djicdn.com'];
+    assert(sourceHosts.length > 0 && sourceHosts.every(host => allowedHosts.some(allowed => host === allowed || host.endsWith('.' + allowed))),
+      id + ' uses relevant official and model attribution source links');
+    if (su7) assert(sourceHosts.some(host => host === 'sketchfab.com' || host.endsWith('.sketchfab.com')) &&
+      sourceHosts.some(host => host === 'creativecommons.org' || host.endsWith('.creativecommons.org')),
+      'SU7 includes downloaded model attribution and license');
     assert(su7 ? !/DJI|CMOS|1770/.test(metadata.notes) : !/SU7|73\.6/.test(metadata.notes), id + ' removes previous model source notes');
   };
   const animateAndMeasure = async (value, label) => {
@@ -106,7 +114,7 @@ const assembled = parts => parts.every(part => part.position.every((value, index
     await b.send('Page.enable');
     await b.send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 1000, deviceScaleFactor: 1, mobile: false });
     await b.send('Page.navigate', { url: 'http://127.0.0.1:5174' });
-    await waitFor('Boolean(window.__structura)');
+    await waitFor('window.__structura?.state().productId === "action-4" && !window.__structura.state().loading');
     await frames();
     assert(await b.evaluate('[...document.getElementById("product-select").options].map(o => o.value).join(",") === "action-4,xiaomi-su7"'), 'selector includes both implemented products');
     await assertClean('action-4', 10);
@@ -141,7 +149,9 @@ const assembled = parts => parts.every(part => part.position.every((value, index
     await b.wait(900);
     await animateAndMeasure(1, 'desktop SU7 explosion');
     const ids = await b.evaluate('[...document.querySelectorAll(".part-item")].map(button => button.dataset.part)');
-    assert(new Set(ids).size === 12, 'SU7 component ids are unique');
+    const expectedIds = ['body-shell', 'body-trim', 'glazing', 'left-front-door', 'left-rear-door', 'right-front-door', 'right-rear-door', 'cabin', 'wheels', 'lighting', 'badges', 'radar'];
+    assert(ids.length === expectedIds.length && new Set(ids).size === expectedIds.length && expectedIds.every(id => ids.includes(id)),
+      'SU7 exposes the twelve imported exterior component groups');
     for (const id of ids) {
       await b.click(`[data-part="${id}"]`);
       assert((await state()).selected === id, 'SU7 selection ' + id);
@@ -207,7 +217,7 @@ const assembled = parts => parts.every(part => part.position.every((value, index
     await b.send('Emulation.setTouchEmulationEnabled', { enabled: false });
     await b.send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 1000, deviceScaleFactor: 1, mobile: false });
     await b.send('Page.navigate', { url: 'http://127.0.0.1:5174/dist/index.html' });
-    await waitFor('Boolean(window.__structura)');
+    await waitFor('window.__structura?.state().productId === "action-4" && !window.__structura.state().loading');
     await switchTo('xiaomi-su7');
     await assertClean('xiaomi-su7', 12);
     await assertMetadata('xiaomi-su7');

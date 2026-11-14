@@ -66,6 +66,7 @@ function init() {
   scene.add(grid);
 
   let product, productId, productInfo, parts = [], selected = null, progress = 0, desiredProgress = 0;
+  let loadVersion = 0, loading = false, loadingProductId = null, loadError = null;
   let labelsVisible = false, viewTween = null, fitting = false, fittingDirection = null, lastTime = performance.now();
   let pointerStart = null, userDragging = false;
   const raycaster = new THREE.Raycaster();
@@ -75,13 +76,56 @@ function init() {
   const listButtons = new Map();
   const guideMaterial = new THREE.LineDashedMaterial({ color: 0xd0f66b, transparent: true, opacity: 0.22, dashSize: 0.12, gapSize: 0.12 });
   const guides = new THREE.Group(); scene.add(guides);
+  const loadStatus = document.createElement('p');
+  loadStatus.id = 'model-load-status'; loadStatus.className = 'model-load-status';
+  loadStatus.setAttribute('role', 'status'); loadStatus.setAttribute('aria-live', 'polite');
+  loadStatus.hidden = true; viewport.append(loadStatus);
 
-  function loadProduct(id) {
-    const nextProduct = products[id].create();
+  async function loadProduct(id) {
+    if (!products[id]) return;
+    const request = ++loadVersion;
+    loading = true; loadingProductId = id; loadError = null;
+    $('fallback').hidden = true;
+    $('loading').hidden = Boolean(product);
+    viewport.setAttribute('aria-busy', 'true');
+    loadStatus.textContent = `正在加载 ${products[id].name} 模型…`;
+    loadStatus.dataset.state = 'loading'; loadStatus.hidden = !product;
+    let nextProduct;
+    try {
+      nextProduct = await products[id].create();
+      if (request !== loadVersion) { nextProduct?.dispose?.(); return; }
+      // Validate the factory result before releasing the currently usable model.
+      if (!nextProduct?.group?.isObject3D || !nextProduct.parts?.length ||
+          nextProduct.parts.some(part => !part.group?.isObject3D || !part.assembled?.isVector3 || !part.exploded?.isVector3)) {
+        throw new Error('Invalid product model');
+      }
+      installProduct(id, nextProduct);
+      loadStatus.hidden = true;
+    } catch {
+      if (nextProduct && nextProduct !== product) nextProduct.dispose?.();
+      if (request !== loadVersion) return;
+      loadError = `${products[id].name} 模型加载失败。请检查网络后重新选择该产品重试。`;
+      loadStatus.textContent = loadError; loadStatus.dataset.state = 'error'; loadStatus.hidden = false;
+      if (product) $('product-select').value = productId;
+      else { $('fallback').hidden = false; $('fallback').textContent = loadError; loadStatus.hidden = true; }
+    } finally {
+      if (request === loadVersion) {
+        loading = false; loadingProductId = null;
+        $('loading').hidden = true;
+        viewport.setAttribute('aria-busy', 'false');
+      }
+    }
+  }
+
+  function installProduct(id, nextProduct) {
     if (product) { scene.remove(product.group); product.dispose?.(); }
     for (const line of guides.children) line.geometry.dispose();
     guides.clear();
-    productId = id; productInfo = products[id]; product = nextProduct; parts = product.parts;
+    productId = id; product = nextProduct; parts = product.parts;
+    productInfo = { ...products[id], ...product.metadata };
+    productInfo.overview = { ...products[id].overview, ...product.overview, ...product.metadata?.overview };
+    productInfo.modelNotes = product.modelNotes ?? productInfo.modelNotes;
+    productInfo.schematicNotes = product.schematicNotes ?? productInfo.schematicNotes;
     progress = desiredProgress = 0; selected = null;
     labelsVisible = false; viewTween = null; fitting = false; fittingDirection = null;
     pointerStart = null; userDragging = false;
@@ -118,7 +162,14 @@ function init() {
       const button = document.createElement('button');
       button.className = 'part-item'; button.dataset.part = part.id;
       button.setAttribute('aria-pressed', 'false');
-      button.innerHTML = `<span class="part-number">${String(index + 1).padStart(2, '0')}</span><span class="part-name">${part.name}</span><span class="part-mark">${part.kind === 'schematic' ? '示意' : '↗'}</span>`;
+      for (const [className, text] of [
+        ['part-number', String(index + 1).padStart(2, '0')],
+        ['part-name', part.name],
+        ['part-mark', part.kind === 'schematic' ? '示意' : '↗'],
+      ]) {
+        const span = document.createElement('span'); span.className = className; span.textContent = text;
+        button.append(span);
+      }
       button.addEventListener('click', () => selectPart(part.id, true));
       $('parts-list').append(button); listButtons.set(part.id, button);
       const label = document.createElement('button');
@@ -158,7 +209,10 @@ function init() {
     viewport.setAttribute('aria-label', `${info.name} 交互式三维模型，拖动旋转，滚轮缩放`);
     renderer.domElement.setAttribute('aria-label', `${info.name} 可交互三维模型；部件也可通过列表选择`);
     document.title = `${info.name} — STRUCTURA 解构实验室`;
-    document.querySelector('meta[name="description"]').content = `在三维空间中探索 ${info.name}。旋转、展开与观察 ${parts.length} 组部件，内部结构为程序化示意。`;
+    document.querySelector('meta[name="description"]').content = `在三维空间中探索 ${info.name}。旋转、展开与观察 ${parts.length} 组部件，${info.structureNote || '内部结构为示意'}。`;
+    if ($('model-method')) $('model-method').textContent = info.modelMethod || '程序化建模';
+    if ($('structure-note')) $('structure-note').textContent = info.structureNote || '内部结构为示意';
+    if ($('source-summary')) $('source-summary').textContent = info.sourceSummary || '内部结构与拆解路径为示意';
     $('model-notes').textContent = info.modelNotes;
     $('schematic-notes').textContent = info.schematicNotes;
     $('sources-links').replaceChildren(...info.sources.map(source => {
@@ -171,6 +225,7 @@ function init() {
   }
 
   function selectPart(id, reveal = false) {
+    if (!product) return;
     selected = id;
     for (const part of parts) {
       const active = part.id === id;
@@ -189,7 +244,7 @@ function init() {
     $('detail-index').textContent = part ? `COMPONENT ${String(parts.indexOf(part) + 1).padStart(2, '0')}` : 'PRODUCT OVERVIEW';
     $('detail-title').textContent = part?.name || productInfo.overview.title;
     $('detail-en').textContent = part?.enName || productInfo.overview.enName;
-    $('detail-kind').textContent = part ? (part.kind === 'schematic' ? '内部结构 · 示意' : '外观参考 · 简化建模') : `探索 ${parts.length} 组产品部件`;
+    $('detail-kind').textContent = part ? (part.kind === 'schematic' ? '内部结构 · 示意' : part.kind === 'model' ? '外观模型' : '外观参考 · 简化建模') : `探索 ${parts.length} 组产品部件`;
     $('detail-description').textContent = part?.description || productInfo.overview.description;
     const specs = part?.specs || productInfo.overview.specs;
     $('detail-specs').replaceChildren(...specs.map(([key, value]) => {
@@ -200,10 +255,11 @@ function init() {
     }));
     if (part && reveal && progress < 0.8) setExplosion(1);
     if (part) $('view-status').textContent = `已选择 · ${part.name}`;
-    else $('view-status').textContent = progress > 0.01 ? '拆解视图 · 内部结构为示意' : '组装视图';
+    else $('view-status').textContent = progress > 0.01 ? `拆解视图 · ${productInfo.structureNote || '内部结构为示意'}` : '组装视图';
   }
 
   function setExplosion(value, direction = null) {
+    if (!product) return;
     desiredProgress = THREE.MathUtils.clamp(value, 0, 1);
     fitting = true;
     fittingDirection = direction || camera.position.clone().sub(controls.target).normalize();
@@ -213,7 +269,7 @@ function init() {
     const label = $('explode-btn').querySelector('span');
     if (label) label.textContent = value > 0.5 ? '复原结构' : '展开结构';
     else $('explode-btn').textContent = value > 0.5 ? '复原结构' : '展开结构';
-    $('view-status').textContent = value === 0 ? '组装视图' : value === 1 ? '拆解视图 · 内部结构为示意' : '结构展开中 · 示意';
+    $('view-status').textContent = value === 0 ? '组装视图' : value === 1 ? `拆解视图 · ${productInfo.structureNote || '内部结构为示意'}` : '结构展开中 · 示意';
   }
 
   function getFit(viewDirection = null) {
@@ -237,6 +293,7 @@ function init() {
   }
 
   function fitView(animate = true, direction = null) {
+    if (!product) return;
     const fit = getFit(direction);
     if (animate && !reducedMotion) viewTween = fit;
     else { controls.target.copy(fit.center); camera.position.copy(fit.position); controls.update(); }
@@ -254,7 +311,6 @@ function init() {
     const option = document.createElement('option'); option.value = id; option.textContent = info.name; return option;
   }));
   loadProduct('action-4'); resize();
-  $('loading').hidden = true;
 
   $('explode-btn').addEventListener('click', () => setExplosion(desiredProgress > 0.5 ? 0 : 1));
   $('explode-range').addEventListener('input', event => setExplosion(Number(event.target.value) / 100));
@@ -277,6 +333,7 @@ function init() {
     if (products[event.target.value]) loadProduct(event.target.value);
   });
   function reset() {
+    if (!product) return;
     selectPart(null); controls.autoRotate = false;
     labelsVisible = false;
     $('labels-btn').setAttribute('aria-pressed', 'false');
@@ -288,6 +345,7 @@ function init() {
 
   renderer.domElement.addEventListener('pointerdown', event => { pointerStart = { x: event.clientX, y: event.clientY }; });
   renderer.domElement.addEventListener('pointerup', event => {
+    if (!product) { pointerStart = null; return; }
     if (!pointerStart || Math.hypot(event.clientX - pointerStart.x, event.clientY - pointerStart.y) > 5) { pointerStart = null; return; }
     pointerStart = null;
     const rect = renderer.domElement.getBoundingClientRect();
@@ -300,6 +358,7 @@ function init() {
   controls.addEventListener('start', () => { userDragging = true; viewTween = null; fittingDirection = null; updateViewButtons(null); });
   controls.addEventListener('end', () => { userDragging = false; });
   renderer.domElement.addEventListener('webglcontextlost', event => {
+    ++loadVersion; loading = false; loadingProductId = null; loadStatus.hidden = true;
     event.preventDefault(); fail('3D 图形连接已中断。请刷新页面重新加载模型。');
   });
 
@@ -372,7 +431,7 @@ function init() {
   requestAnimationFrame(animate);
   // Read-only diagnostics for acceptance checks; no network or user information.
   window.__structura = {
-    state: () => ({ productId, progress, desiredProgress, selected, labels: labels.size, labelsVisible, guides: guides.children.length, geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures, camera: camera.position.toArray(), target: controls.target.toArray(), autoRotate: controls.autoRotate, parts: parts.length, drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles }),
+    state: () => ({ productId, loading, loadingProductId, loadError, progress, desiredProgress, selected, labels: labels.size, labelsVisible, guides: guides.children.length, geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures, camera: camera.position.toArray(), target: controls.target.toArray(), autoRotate: controls.autoRotate, parts: parts.length, drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles }),
     bounds: () => parts.map(part => {
       const box = new THREE.Box3().setFromObject(part.group);
       const corners = [];

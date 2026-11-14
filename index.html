@@ -93,12 +93,12 @@
             <p id="detail-description" class="detail-description">旋转机身，或展开结构。选择模型上的部件，了解外观之下的设计。</p>
             <dl id="detail-specs" class="detail-specs"><div><dt>传感器</dt><dd>1/1.3 英寸 CMOS</dd></div><div><dt>机身重量</dt><dd>145 g</dd></div><div><dt>外形尺寸</dt><dd>70.5 × 44.2 × 32.8 mm</dd></div></dl>
           </section>
-          <button id="sources-btn" class="sources-note"><svg><use href="#icon-info"/></svg><span><strong>关于这个模型</strong><span>内部结构与拆解路径为示意</span></span><svg class="source-arrow"><use href="#icon-arrow"/></svg></button>
+          <button id="sources-btn" class="sources-note"><svg><use href="#icon-info"/></svg><span><strong>关于这个模型</strong><span id="source-summary">内部结构与拆解路径为示意</span></span><svg class="source-arrow"><use href="#icon-arrow"/></svg></button>
         </aside>
       </main>
     </div>
 
-    <footer class="app-footer"><span>DESIGNED TO BE DISCOVERED.</span><span><i></i> 程序化建模 <b>·</b> 内部结构为示意</span><span>STRUCTURA LAB <b>©</b> 2026</span></footer>
+    <footer class="app-footer"><span>DESIGNED TO BE DISCOVERED.</span><span><i></i> <span id="model-method">程序化建模</span> <b>·</b> <span id="structure-note">内部结构为示意</span></span><span>STRUCTURA LAB <b>©</b> 2026</span></footer>
 
     <dialog id="sources-dialog" class="info-dialog" aria-labelledby="sources-title"><div class="dialog-header"><span class="eyebrow">MODEL NOTES</span><button id="close-sources-btn" class="dialog-close" aria-label="关闭资料说明"><svg><use href="#icon-close"/></svg></button></div><h2 id="sources-title">外观有据，结构为示意。</h2><p id="model-notes"></p><div class="dialog-callout"><strong>示意范围</strong><p id="schematic-notes"></p></div><h3>参考资料</h3><div id="sources-links" class="source-links"></div><p id="source-footnote" class="dialog-footnote"></p></dialog>
     <dialog id="help-dialog" class="info-dialog" aria-labelledby="help-title"><div class="dialog-header"><span class="eyebrow">QUICK GUIDE</span><button id="close-help-btn" class="dialog-close" aria-label="关闭操作指南"><svg><use href="#icon-close"/></svg></button></div><h2 id="help-title">换个角度，发现细节。</h2><div class="help-row"><span>旋转模型</span><strong>鼠标拖动 / 单指滑动</strong></div><div class="help-row"><span>缩放模型</span><strong>鼠标滚轮 / 双指缩放</strong></div><div class="help-row"><span>查看部件</span><strong>点击模型或部件目录</strong></div><div class="help-row"><span>展开 / 组装</span><kbd>SPACE</kbd></div><div class="help-row"><span>复原模型与视角</span><kbd>R</kbd></div><div class="help-row"><span>取消选择</span><kbd>ESC</kbd></div><p class="dialog-footnote">拆解滑杆可停留在任意位置，方便观察层次关系。</p></dialog>

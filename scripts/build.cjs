@@ -13,7 +13,7 @@ fs.rmSync(out, { recursive: true, force: true });
 fs.mkdirSync(out, { recursive: true });
 copy(path.join(root, 'index.html'), path.join(out, 'index.html'));
 copy(path.join(root, 'src'), path.join(out, 'src'));
-for (const file of ['build/three.module.js', 'build/three.core.js', 'examples/jsm/controls/OrbitControls.js', 'examples/jsm/environments/RoomEnvironment.js', 'examples/jsm/geometries/RoundedBoxGeometry.js', 'LICENSE']) {
+for (const file of ['build/three.module.js', 'build/three.core.js', 'examples/jsm/controls/OrbitControls.js', 'examples/jsm/environments/RoomEnvironment.js', 'examples/jsm/geometries/RoundedBoxGeometry.js', 'examples/jsm/loaders/GLTFLoader.js', 'examples/jsm/utils/BufferGeometryUtils.js', 'LICENSE']) {
   copy(path.join(root, 'node_modules/three', file), path.join(out, 'vendor/three', file));
 }
 console.log('Built static site: ' + out);
