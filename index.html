@@ -42,7 +42,7 @@
         <span class="picker-label">当前产品</span>
         <label class="select-wrap"><span class="sr-only">切换产品</span><select id="product-select"><option value="action-4">DJI Osmo Action 4</option></select><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m5 6 3 3 3-3"/></svg></label>
       </div>
-      <span class="edition">VOL. <strong>001</strong></span>
+      <span class="edition">VOL. <strong id="product-edition">001</strong></span>
     </header>
 
     <div class="app-body">
@@ -57,14 +57,14 @@
       <main class="workbench">
         <section class="main-column" aria-labelledby="product-title">
           <div class="product-heading">
-            <div><p class="eyebrow"><span></span> PRODUCT EXPLORER <span class="eyebrow-slash">/</span> 运动相机</p><h1 id="product-title">Osmo Action <span>4</span></h1><p class="product-subtitle">小巧机身，逐层探索。<span>看见每一个部件的巧思。</span></p></div>
-            <div class="product-tag"><span>DJI</span><span>2023 · ACTION CAMERA</span></div>
+            <div><p class="eyebrow"><span></span> PRODUCT EXPLORER <span class="eyebrow-slash">/</span> <span id="product-category">运动相机</span></p><h1 id="product-title">Osmo Action <span>4</span></h1><p id="product-subtitle" class="product-subtitle">小巧机身，逐层探索。<span>看见每一个部件的巧思。</span></p></div>
+            <div class="product-tag"><span id="product-brand">DJI</span><span id="product-model-label">2023 · ACTION CAMERA</span></div>
           </div>
 
           <div class="scene-card">
             <div id="viewport" class="viewport" aria-label="Action 4 交互式三维模型，拖动旋转，滚轮缩放">
-              <div class="stage-top"><div class="stage-caption"><span>01 — STRUCTURE STUDY</span><strong>探索，始于好奇。</strong></div><span class="live-badge"><i></i> 实时 3D</span></div>
-              <div class="stage-wordmark" aria-hidden="true">ACTION 4</div>
+              <div class="stage-top"><div class="stage-caption"><span id="stage-study">01 — STRUCTURE STUDY</span><strong>探索，始于好奇。</strong></div><span class="live-badge"><i></i> 实时 3D</span></div>
+              <div id="stage-wordmark" class="stage-wordmark" aria-hidden="true">ACTION 4</div>
               <div class="stage-cross cross-one" aria-hidden="true">+</div><div class="stage-cross cross-two" aria-hidden="true">+</div>
               <div id="labels-layer" class="labels-layer"></div>
               <div id="loading" class="loading-state"><span class="loading-spinner"></span><span>正在构建三维场景</span><small>从几何开始，还原设计。</small></div>
@@ -79,11 +79,11 @@
             </div>
           </div>
 
-          <div class="interaction-guide"><span><svg><use href="#icon-hand"/></svg>拖动旋转</span><span><svg><use href="#icon-mouse"/></svg>滚轮缩放 / 双指缩放</span><span><svg><use href="#icon-plus"/></svg>点击部件探索</span><span class="guide-count">10 PARTS · 1 PERSPECTIVE</span></div>
+          <div class="interaction-guide"><span><svg><use href="#icon-hand"/></svg>拖动旋转</span><span><svg><use href="#icon-mouse"/></svg>滚轮缩放 / 双指缩放</span><span><svg><use href="#icon-plus"/></svg>点击部件探索</span><span id="guide-count" class="guide-count">10 PARTS · 1 PERSPECTIVE</span></div>
         </section>
 
         <aside class="inspector" aria-label="部件与详情">
-          <div class="inspector-heading"><div><span class="eyebrow">INSIDE THE DESIGN</span><h2>部件目录 <span>10</span></h2></div><svg><use href="#icon-layers"/></svg></div>
+          <div class="inspector-heading"><div><span class="eyebrow">INSIDE THE DESIGN</span><h2>部件目录 <span id="parts-count">10</span></h2></div><svg><use href="#icon-layers"/></svg></div>
           <div class="parts-caption"><span>选择一个部件，了解它的作用</span><span>↓</span></div>
           <div id="parts-list" class="parts-list" aria-label="部件列表"></div>
           <section id="detail-panel" class="detail-panel" aria-live="polite" aria-atomic="true">
@@ -100,7 +100,7 @@
 
     <footer class="app-footer"><span>DESIGNED TO BE DISCOVERED.</span><span><i></i> 程序化建模 <b>·</b> 内部结构为示意</span><span>STRUCTURA LAB <b>©</b> 2026</span></footer>
 
-    <dialog id="sources-dialog" class="info-dialog" aria-labelledby="sources-title"><div class="dialog-header"><span class="eyebrow">MODEL NOTES</span><button id="close-sources-btn" class="dialog-close" aria-label="关闭资料说明"><svg><use href="#icon-close"/></svg></button></div><h2 id="sources-title">外观有据，结构为示意。</h2><p>本模型使用 Three.js 基础几何体和程序化纹理构建，未使用外部 3D 模型。外形比例、公开参数与标志性外观参考 DJI 官方资料。</p><div class="dialog-callout"><strong>示意范围</strong><p>主板布局、内部支架、连接方式、材质细节及部件拆解路径均为简化示意，不代表真实工程结构，也不能作为维修拆机指导。模型中的显示画面为程序化绘制。</p></div><h3>参考资料</h3><a href="https://www.dji.com/osmo-action-4/specs" target="_blank" rel="noreferrer">DJI Osmo Action 4 · 官方规格<svg><use href="#icon-external"/></svg></a><a href="https://www.dji.com/osmo-action-4" target="_blank" rel="noreferrer">DJI Osmo Action 4 · 产品页面<svg><use href="#icon-external"/></svg></a><a href="https://dl.djicdn.com/downloads/DJI_Osmo_Action_4/UM/20230906/DJI_Osmo_Action_4_User_Manual_v1.2_en.pdf" target="_blank" rel="noreferrer">DJI Osmo Action 4 · 用户手册<svg><use href="#icon-external"/></svg></a><p class="dialog-footnote">非 DJI 官方展示。产品名称与商标归其各自所有者。</p></dialog>
+    <dialog id="sources-dialog" class="info-dialog" aria-labelledby="sources-title"><div class="dialog-header"><span class="eyebrow">MODEL NOTES</span><button id="close-sources-btn" class="dialog-close" aria-label="关闭资料说明"><svg><use href="#icon-close"/></svg></button></div><h2 id="sources-title">外观有据，结构为示意。</h2><p id="model-notes"></p><div class="dialog-callout"><strong>示意范围</strong><p id="schematic-notes"></p></div><h3>参考资料</h3><div id="sources-links" class="source-links"></div><p id="source-footnote" class="dialog-footnote"></p></dialog>
     <dialog id="help-dialog" class="info-dialog" aria-labelledby="help-title"><div class="dialog-header"><span class="eyebrow">QUICK GUIDE</span><button id="close-help-btn" class="dialog-close" aria-label="关闭操作指南"><svg><use href="#icon-close"/></svg></button></div><h2 id="help-title">换个角度，发现细节。</h2><div class="help-row"><span>旋转模型</span><strong>鼠标拖动 / 单指滑动</strong></div><div class="help-row"><span>缩放模型</span><strong>鼠标滚轮 / 双指缩放</strong></div><div class="help-row"><span>查看部件</span><strong>点击模型或部件目录</strong></div><div class="help-row"><span>展开 / 组装</span><kbd>SPACE</kbd></div><div class="help-row"><span>复原模型与视角</span><kbd>R</kbd></div><div class="help-row"><span>取消选择</span><kbd>ESC</kbd></div><p class="dialog-footnote">拆解滑杆可停留在任意位置，方便观察层次关系。</p></dialog>
     <script type="module">
       import('./src/main.js').catch(error => {

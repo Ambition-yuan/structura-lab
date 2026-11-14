@@ -30,7 +30,6 @@ function init() {
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.domElement.className = 'three-canvas';
-  renderer.domElement.setAttribute('aria-label', 'DJI Osmo Action 4 可交互三维模型；部件也可通过右侧列表选择');
   renderer.domElement.setAttribute('tabindex', '0');
   viewport.prepend(renderer.domElement);
 
@@ -66,7 +65,7 @@ function init() {
   grid.material.transparent = true; grid.material.opacity = 0.10;
   scene.add(grid);
 
-  let product, parts = [], selected = null, progress = 0, desiredProgress = 0;
+  let product, productId, productInfo, parts = [], selected = null, progress = 0, desiredProgress = 0;
   let labelsVisible = false, viewTween = null, fitting = false, fittingDirection = null, lastTime = performance.now();
   let pointerStart = null, userDragging = false;
   const raycaster = new THREE.Raycaster();
@@ -78,20 +77,40 @@ function init() {
   const guides = new THREE.Group(); scene.add(guides);
 
   function loadProduct(id) {
+    const nextProduct = products[id].create();
     if (product) { scene.remove(product.group); product.dispose?.(); }
-    product = products[id].create(); parts = product.parts;
+    for (const line of guides.children) line.geometry.dispose();
+    guides.clear();
+    productId = id; productInfo = products[id]; product = nextProduct; parts = product.parts;
+    progress = desiredProgress = 0; selected = null;
+    labelsVisible = false; viewTween = null; fitting = false; fittingDirection = null;
+    pointerStart = null; userDragging = false;
+    controls.autoRotate = false;
+    // Flush any damping left by a gesture on the previous product before reframing.
+    controls.enableDamping = false; controls.update(); controls.enableDamping = true;
+    controls.target.set(0, 0, 0); camera.position.fromArray(productInfo.view);
     scene.add(product.group);
+    updateProductContent();
     $('parts-list').replaceChildren(); $('labels-layer').replaceChildren();
     listButtons.clear(); labels.clear();
+    const originalMaterials = new Set();
+    const highlightMaterials = new Map();
     for (const [index, part] of parts.entries()) {
+      part.group.position.copy(part.assembled);
       part.group.traverse(mesh => {
         if (!mesh.isMesh) return;
         mesh.userData.partId = part.id;
         // Isolate highlights even when the model shares materials across parts.
         const clone = material => {
+          originalMaterials.add(material);
+          // Share a highlight material within one part, never between parts.
+          if (!highlightMaterials.has(material)) highlightMaterials.set(material, new Map());
+          const byPart = highlightMaterials.get(material);
+          if (byPart.has(part.id)) return byPart.get(part.id);
           const m = material.clone();
           m.userData.originalEmissive = m.emissive?.clone();
           m.userData.originalIntensity = m.emissiveIntensity;
+          byPart.set(part.id, m);
           return m;
         };
         mesh.material = Array.isArray(mesh.material) ? mesh.material.map(clone) : clone(mesh.material);
@@ -104,12 +123,51 @@ function init() {
       $('parts-list').append(button); listButtons.set(part.id, button);
       const label = document.createElement('button');
       label.className = 'model-label'; label.textContent = `${String(index + 1).padStart(2, '0')} ${part.name}`;
+      label.hidden = true;
       label.addEventListener('click', () => selectPart(part.id, false));
       $('labels-layer').append(label); labels.set(part.id, label);
       const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([part.assembled, part.exploded]), guideMaterial);
       line.computeLineDistances(); guides.add(line);
     }
+    originalMaterials.forEach(material => material.dispose());
+    $('labels-btn').setAttribute('aria-pressed', 'false');
+    $('auto-rotate-btn').setAttribute('aria-pressed', 'false');
+    updateViewButtons(null); setExplosion(0); fitting = false; fittingDirection = null;
     selectPart(null); fitView(false);
+  }
+
+  function updateProductContent() {
+    const info = productInfo;
+    $('product-select').value = productId;
+    const accent = document.createElement('span'); accent.textContent = info.title[1];
+    $('product-title').replaceChildren(document.createTextNode(info.title[0]), accent);
+    $('product-category').textContent = info.category;
+    $('product-brand').textContent = info.brand;
+    $('product-edition').textContent = info.edition;
+    $('product-model-label').textContent = info.modelLabel;
+    const subtitle = document.createElement('span'); subtitle.textContent = info.subtitle[1];
+    $('product-subtitle').replaceChildren(document.createTextNode(info.subtitle[0]), subtitle);
+    $('stage-study').textContent = `${info.edition.slice(1)} — STRUCTURE STUDY`;
+    $('stage-wordmark').textContent = info.wordmark;
+    $('parts-count').textContent = String(parts.length);
+    $('guide-count').textContent = `${parts.length} PARTS · 1 PERSPECTIVE`;
+    for (const [view, label] of [['front', info.frontLabel], ['rear', info.rearLabel]]) {
+      $(`${view}-view-btn`).textContent = label;
+      $(`${view}-view-btn`).title = `查看${label}`;
+    }
+    viewport.setAttribute('aria-label', `${info.name} 交互式三维模型，拖动旋转，滚轮缩放`);
+    renderer.domElement.setAttribute('aria-label', `${info.name} 可交互三维模型；部件也可通过列表选择`);
+    document.title = `${info.name} — STRUCTURA 解构实验室`;
+    document.querySelector('meta[name="description"]').content = `在三维空间中探索 ${info.name}。旋转、展开与观察 ${parts.length} 组部件，内部结构为程序化示意。`;
+    $('model-notes').textContent = info.modelNotes;
+    $('schematic-notes').textContent = info.schematicNotes;
+    $('sources-links').replaceChildren(...info.sources.map(source => {
+      const link = document.createElement('a');
+      link.href = source.url; link.target = '_blank'; link.rel = 'noreferrer';
+      link.textContent = source.label;
+      return link;
+    }));
+    $('source-footnote').textContent = `非 ${info.brand === 'DJI' ? 'DJI' : '小米汽车'} 官方展示。产品名称与商标归其各自所有者。`;
   }
 
   function selectPart(id, reveal = false) {
@@ -129,11 +187,11 @@ function init() {
     }
     const part = parts.find(p => p.id === id);
     $('detail-index').textContent = part ? `COMPONENT ${String(parts.indexOf(part) + 1).padStart(2, '0')}` : 'PRODUCT OVERVIEW';
-    $('detail-title').textContent = part?.name || '小机身，大世界。';
-    $('detail-en').textContent = part?.enName || 'DJI OSMO ACTION 4';
-    $('detail-kind').textContent = part ? (part.kind === 'schematic' ? '内部结构 · 示意' : '外观参考 · 简化建模') : '探索 10 组产品部件';
-    $('detail-description').textContent = part?.description || '从完整机身到内部层次，换一个角度认识这台运动相机。点击部件，或展开结构开始探索。';
-    const specs = part?.specs || [['传感器', '1/1.3 英寸 CMOS'], ['影像规格', '4K / 120fps'], ['机身重量', '145 g']];
+    $('detail-title').textContent = part?.name || productInfo.overview.title;
+    $('detail-en').textContent = part?.enName || productInfo.overview.enName;
+    $('detail-kind').textContent = part ? (part.kind === 'schematic' ? '内部结构 · 示意' : '外观参考 · 简化建模') : `探索 ${parts.length} 组产品部件`;
+    $('detail-description').textContent = part?.description || productInfo.overview.description;
+    const specs = part?.specs || productInfo.overview.specs;
     $('detail-specs').replaceChildren(...specs.map(([key, value]) => {
       const row = document.createElement('div'); row.className = 'spec-row';
       const dt = document.createElement('dt'); dt.textContent = key;
@@ -175,7 +233,7 @@ function init() {
       distance = Math.max(distance, Math.abs(v.dot(right)) / tanH + v.dot(direction), Math.abs(v.dot(up)) / tanV + v.dot(direction));
     }
     }
-    return { center, position: center.clone().addScaledVector(direction, distance * 1.16) };
+    return { center, position: center.clone().addScaledVector(direction, distance * (productInfo.fitPadding || 1.16)) };
   }
 
   function fitView(animate = true, direction = null) {
@@ -192,6 +250,9 @@ function init() {
     if (product) fitView(false);
   }
   new ResizeObserver(resize).observe(viewport);
+  $('product-select').replaceChildren(...Object.entries(products).map(([id, info]) => {
+    const option = document.createElement('option'); option.value = id; option.textContent = info.name; return option;
+  }));
   loadProduct('action-4'); resize();
   $('loading').hidden = true;
 
@@ -213,15 +274,16 @@ function init() {
     labelsVisible = !labelsVisible; $('labels-btn').setAttribute('aria-pressed', String(labelsVisible));
   });
   $('product-select').addEventListener('change', event => {
-    if (products[event.target.value]) { loadProduct(event.target.value); reset(); }
+    if (products[event.target.value]) loadProduct(event.target.value);
   });
   function reset() {
     selectPart(null); controls.autoRotate = false;
     labelsVisible = false;
     $('labels-btn').setAttribute('aria-pressed', 'false');
     $('auto-rotate-btn').setAttribute('aria-pressed', 'false');
-    updateViewButtons(null); setExplosion(0, new THREE.Vector3(11, 7.5, 16));
-    fitView(true, new THREE.Vector3(11, 7.5, 16));
+    const direction = new THREE.Vector3(...productInfo.view);
+    updateViewButtons(null); setExplosion(0, direction);
+    fitView(true, direction);
   }
 
   renderer.domElement.addEventListener('pointerdown', event => { pointerStart = { x: event.clientX, y: event.clientY }; });
@@ -310,7 +372,7 @@ function init() {
   requestAnimationFrame(animate);
   // Read-only diagnostics for acceptance checks; no network or user information.
   window.__structura = {
-    state: () => ({ progress, desiredProgress, selected, camera: camera.position.toArray(), target: controls.target.toArray(), autoRotate: controls.autoRotate, parts: parts.length, drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles }),
+    state: () => ({ productId, progress, desiredProgress, selected, labels: labels.size, labelsVisible, guides: guides.children.length, geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures, camera: camera.position.toArray(), target: controls.target.toArray(), autoRotate: controls.autoRotate, parts: parts.length, drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles }),
     bounds: () => parts.map(part => {
       const box = new THREE.Box3().setFromObject(part.group);
       const corners = [];

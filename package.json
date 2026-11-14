@@ -2,7 +2,7 @@
   "name": "structura-lab",
   "version": "1.0.0",
   "private": true,
-  "description": "Procedural product structure explorer — DJI Osmo Action 4",
+  "description": "Procedural product structure explorer — DJI Osmo Action 4 and Xiaomi SU7",
   "scripts": {
     "start": "node scripts/serve.cjs",
     "dev": "node scripts/serve.cjs",

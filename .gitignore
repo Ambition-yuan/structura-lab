@@ -5,6 +5,7 @@ dist/
 outputs/
 qa/*.png
 qa/*.json
+qa/chrome-*/
 *.tar.gz
 *.tgz
 .tools/
